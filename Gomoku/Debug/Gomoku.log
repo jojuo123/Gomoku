@@ -1,0 +1,3 @@
+﻿  main.cpp
+d:\hcmus\cs161\gomoku\gomoku\gomoku\main.cpp(254): warning C4101: 'coord': unreferenced local variable
+  Gomoku.vcxproj -> D:\HCMUS\CS161\Gomoku\Gomoku\Debug\Gomoku.exe
