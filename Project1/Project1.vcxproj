@@ -78,6 +78,9 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -116,6 +119,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Computer.cpp" />
     <ClCompile Include="GamePlay.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SaveFile.cpp" />
@@ -123,7 +127,9 @@
     <ClCompile Include="support.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Computer.h" />
     <ClInclude Include="GamePlay.h" />
+    <ClInclude Include="Importance.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="SaveFile.h" />
     <ClInclude Include="setting.h" />
@@ -144,6 +150,10 @@
     <None Include="savegame9.out" />
     <None Include="setting.out" />
     <None Include="statistic.out" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="dive.mp3" />
+    <Media Include="dive.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

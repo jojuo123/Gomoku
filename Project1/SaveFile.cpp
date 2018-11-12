@@ -3,7 +3,7 @@
 #include "SaveFile.h"
 #include <string>
 
-void readSaveFile(GamePlay & gp, Player & p1, Player & p2, int id)
+void readSaveFile(GamePlay & gp, Player & p1, Player & p2, int id, Computer & computer)
 {
 	std::ifstream fin;
 
@@ -13,13 +13,14 @@ void readSaveFile(GamePlay & gp, Player & p1, Player & p2, int id)
 
 	fin.open(fi);
 	
-	int n, cur, com, tmp;
+	int n, cur, com, tmp, level;
 	int move1 = 0, move2 = 0;
 
 	fin >> n; 
 	gp.setSize(n);
 	fin >> cur;
 	fin >> com;
+	fin >> level;
 	for (int i = 0; i < n; i++) 
 		for (int j = 0; j < n; j++) 
 		{
@@ -34,11 +35,12 @@ void readSaveFile(GamePlay & gp, Player & p1, Player & p2, int id)
 	else p2.setComputer(false);
 	p1.setMove(move1);
 	p2.setMove(move2);
+	computer.setLevel(level);
 
 	fin.close();
 }
 
-void writeSaveFile(GamePlay gp, Player p1, Player p2, int id)
+void writeSaveFile(GamePlay gp, Player p1, Player p2, int id, Computer computer)
 {
 	std::ofstream fout;
 
@@ -52,6 +54,9 @@ void writeSaveFile(GamePlay gp, Player p1, Player p2, int id)
 	fout << gp.getCurrent() << endl;
 
 	if (p2.getComputer()) fout << "1" << endl;
+	else fout << "0" << endl;
+
+	if (p2.getComputer()) fout << computer.getLevel() << endl;
 	else fout << "0" << endl;
 
 	for (int i = 0; i < gp.getSize(); i++)

@@ -12,6 +12,7 @@ bool GamePlay::draw()
 
 void GamePlay::clear()
 {
+	count = 0;
 	for (int i = 0; i < N; i++)
 		for (int j = 0; j < N; j++)
 			board[i][j] = 0;
@@ -24,11 +25,8 @@ bool GamePlay::isEmpty(int x, int y)
 
 void GamePlay::set(int x, int y, int no)
 {
-	if (isEmpty(x, y))
-	{
-		board[x][y] = no + 1;
-		count++;
-	}
+	board[x][y] = no + 1;
+	count++;
 }
 
 int GamePlay::get(int x, int y)

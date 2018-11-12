@@ -9,10 +9,17 @@
 #include "SaveFile.h"
 #include "setting.h"
 #include "Statistic.h"
+#include "Computer.h"
 #include <string>
+#include <map>
+#include <mmsystem.h>
+#include <mciapi.h>
+
+#pragma comment(lib, "winmm.lib")
 
 COORD cur;
 Setting st;
+Computer computer;
 GamePlay gp;
 Player player[2];
 Status status;
@@ -20,11 +27,10 @@ Statistic statis;
 bool isWin = false;
 bool isDraw = false;
 int currentPlayer;
-bool resumepvp = false, resumepvc = false;
-INPUT_RECORD InputRecord, InputRecord1;
-DWORD Events;
+bool resumepvp = false;
+bool resumepvc = false;
 int n, a, b, colorGrid, color1, color2; 
-bool sound;
+bool sound; 
 
 void play(bool, bool);
 void SaveFile(void);
@@ -32,6 +38,7 @@ void LoadFile(void);
 void settingMenu(void);
 void SaveSetting(int, int, int, bool, int, int, int);
 void StatisticMenu(void);
+void pvcMenu(void);
 
 void Message(string str)
 {
@@ -39,7 +46,7 @@ void Message(string str)
 	cout << str;
 	Sleep(1000);
 	gotoXY(5, 9);
-	printf("\t\t\t\t\t");
+	printf("                                                                                                     ");
 }
 
 void banner()
@@ -186,7 +193,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 					else TextColor(st.getColorCodeChar2());
 					printf("%c", player[currentPlayer].getPlayerChar());
 					gp.set(toXarray(cur.X), toYarray(cur.Y), currentPlayer);
-					player[currentPlayer].setMove(player[currentPlayer].getMove() + 1);
+					if (!player[1].getComputer()) player[currentPlayer].setMove(player[currentPlayer].getMove() + 1);
 
 					if (gp.win(toXarray(cur.X), toYarray(cur.Y)))
 					{
@@ -194,7 +201,8 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 						status.setIsPlay(false);
 						congrat(currentPlayer);
 						//updateStatistic(currentPlayer);
-						statis.updatePvP(currentPlayer, player[0].getMove(), player[1].getMove());
+						if (!player[1].getComputer())
+							statis.updatePvP(currentPlayer, player[0].getMove(), player[1].getMove());
 						return;
 					}
 
@@ -202,7 +210,8 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 					{
 						isDraw = true;
 						status.setIsPlay(false);
-						statis.updatePvP(-1, player[0].getMove(), player[1].getMove());
+						if (!player[1].getComputer())
+							statis.updatePvP(-1, player[0].getMove(), player[1].getMove());
 						Message("Draw game!");
 						return;
 					}
@@ -254,7 +263,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 								Message("Cannot save finished game!");
 							else
 							{
-								writeSaveFile(gp, player[0], player[1], cur.Y - 11);
+								writeSaveFile(gp, player[0], player[1], cur.Y - 11, computer);
 								status.setStatus(STATUS_NONE);
 								clearRightSide();
 								Message("SAVED SUCCESSFULLY TO SLOT " + std::to_string(cur.Y - 11));
@@ -271,7 +280,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 				{
 					if (cur.Y - 11 >= 1 && cur.Y - 11 <= 10)
 					{
-						readSaveFile(gp, player[0], player[1], cur.Y - 11);
+						readSaveFile(gp, player[0], player[1], cur.Y - 11, computer);
 
 						st.setSize(gp.getSize());
 						clearGrid();
@@ -426,7 +435,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 					printf("%c", (char)a);
 				}
 
-				if (cur.Y == 14) // character p1
+				if (cur.Y == 14) // character p2
 				{
 					b--;
 					if (a == b)
@@ -490,10 +499,68 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 		}
 	}
 
+	if (status.getStatus() == STATUS_PVC && !status.getIsPlay())
+	{
+
+		if (!ir.bKeyDown)
+		{
+			if (ir.wVirtualKeyCode == VK_DOWN)
+			{
+				gotoXY(cur);
+				printf("  ");
+				if (cur.Y < 15) cur.Y++;
+				else cur.Y = 12;
+				gotoXY(cur);
+				printf(">>");
+			}
+
+			if (ir.wVirtualKeyCode == VK_UP)
+			{
+				gotoXY(cur);
+				printf("  ");
+				if (cur.Y > 12) cur.Y--;
+				else cur.Y = 15;
+				gotoXY(cur);
+				printf(">>");
+			}
+
+			if (ir.wVirtualKeyCode == VK_SPACE)
+			{
+				if (cur.Y == 12)
+				{
+					computer.setLevel(1);
+					clearRightSide();
+					setcursor(true, 0);
+					play(true, true);
+				}
+				if (cur.Y == 13)
+				{
+					computer.setLevel(2);
+					clearRightSide();
+					setcursor(true, 0);
+					play(true, true);
+				}
+				if (cur.Y == 14)
+				{
+					computer.setLevel(3);
+					clearRightSide();
+					setcursor(true, 0);
+					play(true, true);
+				}
+				if (cur.Y == 15)
+				{
+					clearRightSide();
+					status.setStatus(STATUS_NONE);
+				}
+			}
+		}
+	}
+
 	if (!ir.bKeyDown)
 	{
 		if (ir.wVirtualKeyCode == VK_F1) 
 		{
+			clearRightSide();
 			status.setStatus(STATUS_RESUME_PVP);
 			status.setIsPlay(false);
 			setcursor(true, 0);
@@ -501,6 +568,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 		}
 		if (ir.wVirtualKeyCode == VK_F2)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_RESUME_PVC);
 			status.setIsPlay(false);
 			setcursor(true, 0);
@@ -508,6 +576,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 		}
 		if (ir.wVirtualKeyCode == VK_F3)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_PVP);
 			status.setIsPlay(false);
 			setcursor(true, 0);
@@ -516,14 +585,17 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 
 		if (ir.wVirtualKeyCode == VK_F4)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_PVC);
 			status.setIsPlay(false);
-			setcursor(true, 0);
-			play(true, true);
+			setcursor(false, 0);
+			pvcMenu();
+			//play(true, true);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F5)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_SETTING);
 			status.setIsPlay(false);
 			setcursor(false, 0);
@@ -532,6 +604,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 
 		if (ir.wVirtualKeyCode == VK_F6)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_SAVE);
 			status.setIsPlay(false);
 			//writeSaveFile(gp, player[0], player[1], 0);
@@ -541,6 +614,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 
 		if (ir.wVirtualKeyCode == VK_F7)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_LOAD);
 			status.setIsPlay(false);
 			//readSaveFile(gp, player[0], player[1], 0);
@@ -550,6 +624,7 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 
 		if (ir.wVirtualKeyCode == VK_F8)
 		{
+			clearRightSide();
 			status.setStatus(STATUS_STAT);
 			setcursor(false, 0);
 			status.setIsPlay(false);
@@ -583,6 +658,9 @@ void LoadFile()
 	gotoXY(cur);
 	printf(">>");
 
+	INPUT_RECORD InputRecord;
+	DWORD Events;
+
 	while (status.getStatus() == STATUS_LOAD)
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
@@ -612,6 +690,9 @@ void SaveFile()
 	gotoXY(cur);
 	printf(">>");
 
+	INPUT_RECORD InputRecord;
+	DWORD Events;
+
 	while (status.getStatus() == STATUS_SAVE)
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
@@ -627,11 +708,16 @@ void SaveFile()
 void play(bool isNew, bool comp)
 {
 	init(isNew, comp);
+
+	resumepvp = (!comp) ? true : false;
+	resumepvc = (comp) ? true : false;
+
+	INPUT_RECORD InputRecord;
+	DWORD Events;
+
 	while (1)
 	{
-		if (comp) resumepvc = true;
-		else resumepvp = true;
-
+		setcursor(true, 0);
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
 		
 		if (InputRecord.EventType == KEY_EVENT) 
@@ -639,11 +725,46 @@ void play(bool isNew, bool comp)
 			KeyEventProc(InputRecord.Event.KeyEvent);
 		}
 
+		if (comp && currentPlayer == 1)
+		{
+			if (currentPlayer == 0) TextColor(st.getColorCodeChar1());
+			else TextColor(st.getColorCodeChar2());
+			setcursor(false, 0);
+			cur = computer.nextMove(gp);
+			gotoXY(toXconsole(cur.X), toYconsole(cur.Y));
+			printf("%c", player[currentPlayer].getPlayerChar());
+
+			gp.set(cur.X, cur.Y, currentPlayer);
+			//player[currentPlayer].setMove(player[currentPlayer].getMove() + 1);
+
+			if (gp.win(cur.X, cur.Y))
+			{
+				isWin = true;
+				status.setIsPlay(false);
+				Message("Computer win");
+			}
+
+			if (gp.draw())
+			{
+				isDraw = true;
+				status.setIsPlay(false);
+				Message("Draw game!");
+			}
+
+			cur.X = toXconsole(cur.X);
+			cur.Y = toYconsole(cur.Y);
+			gotoXY(cur);
+
+			currentPlayer = currentPlayer ^ 1; //swap player
+			gp.setCurrent(currentPlayer);
+		}
+
 		if (isWin || isDraw) 
 		{
 			resumepvp = false;
 			resumepvc = false;
 			status.setIsPlay(false);
+			status.setStatus(STATUS_NONE);
 			break;
 		}
 
@@ -653,6 +774,39 @@ void play(bool isNew, bool comp)
 		}
 	}
 	setcursor(false, 0);
+}
+
+void pvcMenu()
+{
+	TextColor(st.getColorCodeGrid());
+	gotoXY(115, 10);
+	printf("PVC MODE:");
+
+	gotoXY(115, 12);
+	printf("Easy");
+	gotoXY(115, 13);
+	printf("Medium");
+	gotoXY(115, 14);
+	printf("Hard");
+	gotoXY(115, 15);
+	printf("Return");
+
+	cur = { 112, 12 };
+	gotoXY(cur);
+	printf(">>");
+
+	INPUT_RECORD InputRecord;
+	DWORD Events;
+
+	while (status.getStatus() == STATUS_PVC && !status.getIsPlay())
+	{
+		ReadConsoleInput(hin, &InputRecord, 1, &Events);
+
+		if (InputRecord.EventType == KEY_EVENT)
+		{
+			KeyEventProc(InputRecord.Event.KeyEvent);
+		}
+	}
 }
 
 void settingMenu()
@@ -709,6 +863,9 @@ void settingMenu()
 	gotoXY(cur);
 	printf(">>");
 
+	INPUT_RECORD InputRecord;
+	DWORD Events;
+
 	while (status.getStatus() == STATUS_SETTING)
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
@@ -728,6 +885,16 @@ void LoadSetting()
 	gp.setSize(st.getSize());
 	TextColor(st.getColorCodeGrid());
 	drawGrid(st.getSize());
+	//PlaySound(TEXT("dive.wav"), NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);
+	mciSendString("open \"dive.mp3\" type mpegvideo alias mp3", NULL, 0, NULL);
+	if (st.getSoundOn())
+	{
+		mciSendString("play mp3 repeat", NULL, 0, NULL);
+	}
+	else
+	{
+		mciSendString("pause mp3", NULL, 0, NULL);
+	}
 }
 
 void SaveSetting(int n, int a, int b, bool sound, int colorGrid, int color1, int color2)
@@ -759,13 +926,13 @@ void SaveSetting(int n, int a, int b, bool sound, int colorGrid, int color1, int
 		Load(gp);
 	}
 
-	if (st.getSoundOn()) //neu co them phan am thanh
+	if (st.getSoundOn())
 	{
-
+		mciSendString("play mp3 repeat", NULL, 0, NULL);
 	}
 	else
 	{
-
+		mciSendString("pause mp3", NULL, 0, NULL);
 	}
 
 	writeSettingFile(st);
@@ -797,39 +964,39 @@ void StatisticMenu()
 	printf("%c", 197);
 
 	gotoXY(117, 13);  
-	printf("Total game:          "); 
+	printf("Total game:           "); 
 	printf("%d", statis.GetTotal());
 
 	gotoXY(117, 14);
-	printf("Player 1 win:        ");
+	printf("Player 1 win:         ");
 	printf("%d", statis.GetWinP1());
 
 	gotoXY(117, 15);
-	printf("Player 2 win:        ");
+	printf("Player 2 win:         ");
 	printf("%d", statis.GetWinP2());
 
 	gotoXY(117, 16);
-	printf("Draw game:           ");
+	printf("Draw game:            ");
 	printf("%d", statis.GetDraw());
 
 	gotoXY(117, 17);
-	printf("Player 1 total move: ");
+	printf("Player 1 total move:  ");
 	printf("%d", statis.GetMoveP1());
 
 	gotoXY(117, 18);
-	printf("Player 2 total move: ");
+	printf("Player 2 total move:  ");
 	printf("%d", statis.GetMoveP2());
 
 	gotoXY(117, 19);
-	printf("Player 1 win percent:");
+	printf("Player 1 win percent: ");
 	printf("%.2lf", statis.GetWinPercentP1());
 
 	gotoXY(117, 20);
-	printf("Player 2 win percent:");
+	printf("Player 2 win percent: ");
 	printf("%.2lf", statis.GetWinPercentP2());
 
 	gotoXY(117, 21);
-	printf("Draw percent:        ");
+	printf("Draw percent:         ");
 	printf("%.2lf", statis.GetDrawPercent());
 }
 
@@ -842,19 +1009,27 @@ int main()
 {
 	setConsoleWindow();
 	setMode();
+
+	LoadSplash();
+
+	LoadAbout();
+
 	banner();
 	setcursor(false, 0);
 	
 	LoadSetting();
 	LoadStatFile();
+
+	INPUT_RECORD InputRecord;
+	DWORD Events;
 	
 	while (1)
 	{
-		ReadConsoleInput(hin, &InputRecord1, 1, &Events);
+		ReadConsoleInput(hin, &InputRecord, 1, &Events);
 
-		if (InputRecord1.EventType == KEY_EVENT)
+		if (InputRecord.EventType == KEY_EVENT)
 		{
-			KeyEventProc(InputRecord1.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent);
 		}
 
 		if (status.getStatus() == STATUS_EXIT) break;

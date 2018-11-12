@@ -17,7 +17,7 @@ public:
 		return p1;
 	}
 	void setCharP1(char a) {
-		p2 = a;
+		p1 = a;
 	}
 	char getCharP2() {
 		return p2;

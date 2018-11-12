@@ -3,10 +3,10 @@
 #define SUPPORT_H
 
 #include <Windows.h>
+#include <map>
 
 const HANDLE hout = GetStdHandle(STD_OUTPUT_HANDLE);
 const HANDLE hin = GetStdHandle(STD_INPUT_HANDLE);
-
 
 void gotoXY(int x, int y);
 
@@ -39,5 +39,11 @@ void clearRightSide();
 void clearGrid();
 
 void setcursor(bool visible, DWORD size);
+
+void LoadSplash();
+
+void printAPCS();
+
+void LoadAbout();
 
 #endif // !SUPPORT_H

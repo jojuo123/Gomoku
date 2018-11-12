@@ -30,6 +30,9 @@
     <ClCompile Include="setting.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="Computer.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="support.h">
@@ -53,6 +56,12 @@
     <ClInclude Include="Statistic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Computer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Importance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="savegame2.out" />
@@ -67,5 +76,9 @@
     <None Include="setting.out" />
     <None Include="savegame1.out" />
     <None Include="statistic.out" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="dive.wav" />
+    <Media Include="dive.mp3" />
   </ItemGroup>
 </Project>
