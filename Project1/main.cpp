@@ -14,9 +14,10 @@
 #include <map>
 #include <mmsystem.h>
 #include <mciapi.h>
+#include "Importance.h"
 
 #pragma comment(lib, "winmm.lib")
-
+/*
 COORD cur;
 Setting st;
 Computer computer;
@@ -31,14 +32,15 @@ bool resumepvp = false;
 bool resumepvc = false;
 int n, a, b, colorGrid, color1, color2; 
 bool sound; 
+*/
 
-void play(bool, bool);
-void SaveFile(void);
-void LoadFile(void);
-void settingMenu(void);
-void SaveSetting(int, int, int, bool, int, int, int);
-void StatisticMenu(void);
-void pvcMenu(void);
+void play(bool, bool, Variables &V);
+void SaveFile(Variables &V);
+void LoadFile(Variables &V);
+void settingMenu(Variables &V);
+void SaveSetting(int, int, int, bool, int, int, int, Variables &V);
+void StatisticMenu(Variables &V);
+void pvcMenu(Variables &V);
 
 void Message(string str)
 {
@@ -67,251 +69,314 @@ void banner()
 
 void congrat(int no)
 {
-	gotoXY(5, 9);
-	printf("Player %d has won!!!!!!", no + 1);
-	Sleep(1000);
-	gotoXY(5, 9);
-	printf("                       ");
+	setcursor(false, 0);
+	COORD tmp = { 115, 12 };
+	clearRightSide();
+	// no = 0 P1, 1 P2, 2 Com
+	if (no == 0)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			COORD tmp = { 115, 12 };
+			for (int j = 0; j < 20; j++)
+			{
+				gotoXY(tmp);
+				printf("PLAYER 1 WIN               PLAYER 1 WIN");
+				tmp.Y++;
+			}
+			Sleep(1000);
+			clearRightSide();
+		}
+	}
+	if (no == 1)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			COORD tmp = { 115, 12 };
+			for (int j = 0; j < 20; j++)
+			{
+				gotoXY(tmp);
+				printf("PLAYER 2 WIN               PLAYER 2 WIN");
+				tmp.Y++;
+			}
+			Sleep(1000);
+			clearRightSide();
+		}
+	}
+	if (no == 2)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 20; j++)
+			{
+				COORD tmp = { 115, 12 };
+				gotoXY(tmp);
+				printf("COMPUTER WIN               COMPUTER WIN");
+				tmp.Y++;
+			}
+			Sleep(1000);
+			clearRightSide();
+		}
+	}
+	if (no == 3)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			COORD tmp = { 115, 12 };
+			for (int j = 0; j < 20; j++)
+			{
+				gotoXY(tmp);
+				printf("DRAW GAME                   DRAW GAME");
+				tmp.Y++;
+			}
+			Sleep(1000);
+			clearRightSide();
+		}
+	}
+	clearRightSide();
 }
 
-void Load(GamePlay gp)
+void Load(GamePlay gp, Variables &V)
 {
 	for (int i = 0; i<gp.getSize(); i++)
 		for (int j = 0; j < gp.getSize(); j++) {
 			int tmp = gp.get(i, j); 
 			gotoXY(toXconsole(i), toYconsole(j));
-			if (tmp == 0) TextColor(st.getColorCodeChar1()); 
-			if (tmp == 1) TextColor(st.getColorCodeChar2());
-			if (tmp >= 0) printf("%c", player[tmp].getPlayerChar());
+			if (tmp == 0) TextColor(V.st.getColorCodeChar1()); 
+			if (tmp == 1) TextColor(V.st.getColorCodeChar2());
+			if (tmp >= 0) printf("%c", V.player[tmp].getPlayerChar());
 			if (tmp < 0) printf(" ");
 		}
 }
 
-void init(bool isNew, bool comp)
+void init(bool isNew, bool comp, Variables &V)
 {
 	setcursor(true, 0);
 	if (!comp)
 	{
-		cur = { 2, 11 };
-		gotoXY(cur);
+		V.cur = { 2, 11 };
+		gotoXY(V.cur);
+		V.player[0].setComputer(false);
+		V.player[1].setComputer(false);
 		if (!isNew)
 		{
-			if (!resumepvp) {
-				gp.clear();
-				currentPlayer = 0;
-				status.setIsPlay(true);
-				player[0].setMove(0);
-				player[1].setMove(0);
-				gp.setCount(0);
+			if (!V.resumepvp) {
+				V.gp.clear();
+				V.currentPlayer = 0;
+				V.status.setIsPlay(true);
+				V.player[0].setMove(0);
+				V.player[1].setMove(0);
+				V.gp.setCount(0);
 			}
 			else {
-				currentPlayer = gp.getCurrent();
-				status.setIsPlay(true);
+				V.currentPlayer = V.gp.getCurrent();
+				V.status.setIsPlay(true);
 			}
 		}
 
 		if (isNew) 
 		{
-			gp.clear();
-			currentPlayer = 0;
-			status.setIsPlay(true);
-			player[0].setMove(0);
-			player[1].setMove(0);
-			gp.setCount(0);
+			V.gp.clear();
+			V.currentPlayer = 0;
+			V.status.setIsPlay(true);
+			V.player[0].setMove(0);
+			V.player[1].setMove(0);
+			V.gp.setCount(0);
 		}
 	}
 	else 
 	{
-		player[1].setComputer(true);
-		cur = { 2, 11 };
-		gotoXY(cur);
+		V.player[1].setComputer(true);
+		V.cur = { 2, 11 };
+		gotoXY(V.cur);
 		if (!isNew)
 		{
-			isWin = false;
-			if (!resumepvc) {
-				gp.clear();
-				currentPlayer = 0;
-				status.setIsPlay(true);
-				player[0].setMove(0);
-				player[1].setMove(0);
-				gp.setCount(0);
+			V.isWin = false;
+			if (!V.resumepvc) {
+				V.gp.clear();
+				V.currentPlayer = 0;
+				V.status.setIsPlay(true);
+				V.player[0].setMove(0);
+				V.player[1].setMove(0);
+				V.gp.setCount(0);
 			}
 			else {
-				currentPlayer = gp.getCurrent();
-				status.setIsPlay(true);
+				V.currentPlayer = V.gp.getCurrent();
+				V.status.setIsPlay(true);
 			}
 		}
 
 		if (isNew)
 		{
-			gp.clear();
-			currentPlayer = 0;
-			status.setIsPlay(true);
-			player[0].setMove(0);
-			player[1].setMove(0);
-			gp.setCount(0);
+			V.gp.clear();
+			V.currentPlayer = 0;
+			V.status.setIsPlay(true);
+			V.player[0].setMove(0);
+			V.player[1].setMove(0);
+			V.gp.setCount(0);
 		}
 	}
-	isWin = false; isDraw = false;
-	Load(gp);
-	cur = { 2, 11 };
-	gotoXY(cur);
+	V.isWin = false; V.isDraw = false;
+	Load(V.gp, V);
+	V.cur = { 2, 11 };
+	gotoXY(V.cur);
 }
 
-void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan option
+void KeyEventProc(KEY_EVENT_RECORD ir, Variables &V) //can thay doi cac hang so khi lam phan option
 {
 
-	if (status.getIsPlay())
+	if (V.status.getIsPlay())
 	{
 		if (!ir.bKeyDown)
 		{
 			if (ir.wVirtualKeyCode == VK_DOWN) {
-				if (cur.Y < (9 + gp.getSize() * 2)) cur.Y += 2;
-				else cur.Y = 11;
-				gotoXY(cur);
+				if (V.cur.Y < (9 + V.gp.getSize() * 2)) V.cur.Y += 2;
+				else V.cur.Y = 11;
+				gotoXY(V.cur);
 			}
 			if (ir.wVirtualKeyCode == VK_UP) {
-				if (cur.Y > 11) cur.Y -= 2;
-				else cur.Y = (9 + gp.getSize() * 2);
-				gotoXY(cur);
+				if (V.cur.Y > 11) V.cur.Y -= 2;
+				else V.cur.Y = (9 + V.gp.getSize() * 2);
+				gotoXY(V.cur);
 			}
 			if (ir.wVirtualKeyCode == VK_LEFT) {
-				if (cur.X > 2) cur.X -= 4;
-				else cur.X = (4 * gp.getSize() - 2);
-				gotoXY(cur);
+				if (V.cur.X > 2) V.cur.X -= 4;
+				else V.cur.X = (4 * V.gp.getSize() - 2);
+				gotoXY(V.cur);
 			}
 			if (ir.wVirtualKeyCode == VK_RIGHT) {
-				if (cur.X < (4 * gp.getSize() - 2)) cur.X += 4;
-				else cur.X = 2;
-				gotoXY(cur);
+				if (V.cur.X < (4 * V.gp.getSize() - 2)) V.cur.X += 4;
+				else V.cur.X = 2;
+				gotoXY(V.cur);
 			}
 			if (ir.wVirtualKeyCode == VK_SPACE) {
 
-				if (gp.isEmpty(toXarray(cur.X), toYarray(cur.Y)))
+				if (V.gp.isEmpty(toXarray(V.cur.X), toYarray(V.cur.Y)))
 				{
-					if (currentPlayer == 0) TextColor(st.getColorCodeChar1());
-					else TextColor(st.getColorCodeChar2());
-					printf("%c", player[currentPlayer].getPlayerChar());
-					gp.set(toXarray(cur.X), toYarray(cur.Y), currentPlayer);
-					if (!player[1].getComputer()) player[currentPlayer].setMove(player[currentPlayer].getMove() + 1);
+					if (V.currentPlayer == 0) TextColor(V.st.getColorCodeChar1());
+					else TextColor(V.st.getColorCodeChar2());
+					printf("%c", V.player[V.currentPlayer].getPlayerChar());
+					V.gp.set(toXarray(V.cur.X), toYarray(V.cur.Y), V.currentPlayer);
+					if (!V.player[1].getComputer()) V.player[V.currentPlayer].setMove(V.player[V.currentPlayer].getMove() + 1);
 
-					if (gp.win(toXarray(cur.X), toYarray(cur.Y)))
+					if (V.gp.win(toXarray(V.cur.X), toYarray(V.cur.Y)))
 					{
-						isWin = true;
-						status.setIsPlay(false);
-						congrat(currentPlayer);
+						V.isWin = true;
+						V.status.setIsPlay(false);
 						//updateStatistic(currentPlayer);
-						if (!player[1].getComputer())
-							statis.updatePvP(currentPlayer, player[0].getMove(), player[1].getMove());
+						if (!V.player[1].getComputer())
+							V.statis.updatePvP(V.currentPlayer, V.player[0].getMove(), V.player[1].getMove());
+						congrat(V.currentPlayer);
 						return;
 					}
 
-					if (gp.draw())
+					if (V.gp.draw())
 					{
-						isDraw = true;
-						status.setIsPlay(false);
-						if (!player[1].getComputer())
-							statis.updatePvP(-1, player[0].getMove(), player[1].getMove());
-						Message("Draw game!");
+						V.isDraw = true;
+						V.status.setIsPlay(false);
+						if (!V.player[1].getComputer())
+							V.statis.updatePvP(-1, V.player[0].getMove(), V.player[1].getMove());
+						//Message("Draw game!");
+						congrat(3);
 						return;
 					}
 
-					currentPlayer = currentPlayer ^ 1; //swap player
-					gp.setCurrent(currentPlayer);
+					V.currentPlayer = V.currentPlayer ^ 1; //swap player
+					V.gp.setCurrent(V.currentPlayer);
 				}
 
 			}
 		}
 	}
 
-	if (status.getStatus() == STATUS_SAVE || status.getStatus() == STATUS_LOAD)
+	if (V.status.getStatus() == STATUS_SAVE || V.status.getStatus() == STATUS_LOAD)
 	{
 		if (!ir.bKeyDown)
 		{
 			if (ir.wVirtualKeyCode == VK_DOWN)
 			{
-				gotoXY(cur);
+				gotoXY(V.cur);
 				printf("  ");
-				if (cur.Y < 22) cur.Y++;
-				else cur.Y = 12;
-				gotoXY(cur);
+				if (V.cur.Y < 22) V.cur.Y++;
+				else V.cur.Y = 12;
+				gotoXY(V.cur);
 				printf(">>");
 			}
 
 			if (ir.wVirtualKeyCode == VK_UP)
 			{
-				gotoXY(cur);
+				gotoXY(V.cur);
 				printf("  ");
-				if (cur.Y > 12) cur.Y--;
-				else cur.Y = 22;
-				gotoXY(cur);
+				if (V.cur.Y > 12) V.cur.Y--;
+				else V.cur.Y = 22;
+				gotoXY(V.cur);
 				printf(">>");
 			}
 
 			if (ir.wVirtualKeyCode == VK_SPACE)
 			{
-				if (status.getStatus() == STATUS_SAVE)
+				if (V.status.getStatus() == STATUS_SAVE)
 				{
-					if (cur.Y - 11 >= 1 && cur.Y - 11 <= 10)
+					if (V.cur.Y - 11 >= 1 && V.cur.Y - 11 <= 10)
 					{
-						if (isWin)
+						if (V.isWin)
 						{
 							Message("Cannot save finished game!");
 						}
 						else
-							if (isDraw) 
+							if (V.isDraw) 
 								Message("Cannot save finished game!");
 							else
 							{
-								writeSaveFile(gp, player[0], player[1], cur.Y - 11, computer);
-								status.setStatus(STATUS_NONE);
+								writeSaveFile(V.gp, V.player[0], V.player[1], V.cur.Y - 11, V.computer);
+								V.status.setStatus(STATUS_NONE);
 								clearRightSide();
-								Message("SAVED SUCCESSFULLY TO SLOT " + std::to_string(cur.Y - 11));
+								Message("SAVED SUCCESSFULLY TO SLOT " + std::to_string(V.cur.Y - 11));
 							}
 					}
-					if (cur.Y == 22)
+					if (V.cur.Y == 22)
 					{
-						status.setStatus(STATUS_NONE);
+						V.status.setStatus(STATUS_NONE);
 						clearRightSide();
 					}
 				}
 
-				if (status.getStatus() == STATUS_LOAD)
+				if (V.status.getStatus() == STATUS_LOAD)
 				{
-					if (cur.Y - 11 >= 1 && cur.Y - 11 <= 10)
+					if (V.cur.Y - 11 >= 1 && V.cur.Y - 11 <= 10)
 					{
-						readSaveFile(gp, player[0], player[1], cur.Y - 11, computer);
+						readSaveFile(V.gp, V.player[0], V.player[1], V.cur.Y - 11, V.computer);
 
-						st.setSize(gp.getSize());
+						V.st.setSize(V.gp.getSize());
 						clearGrid();
-						TextColor(st.getColorCodeGrid());
-						drawGrid(st.getSize());
-						writeSettingFile(st);
+						TextColor(V.st.getColorCodeGrid());
+						drawGrid(V.st.getSize());
+						writeSettingFile(V.st);
 
-						status.setStatus(STATUS_NONE);
+						V.status.setStatus(STATUS_NONE);
 						clearRightSide();
-						if (player[1].getComputer())
+						if (V.player[1].getComputer())
 						{
-							status.setStatus(STATUS_PVC);
-							status.setIsPlay(false);
-							resumepvc = true;
-							Message("LOADED SUCCESSFULLY SLOT " + std::to_string(cur.Y - 11));
-							play(false, true);
+							V.status.setStatus(STATUS_PVC);
+							V.status.setIsPlay(false);
+							V.resumepvc = true;
+							Message("LOADED SUCCESSFULLY SLOT " + std::to_string(V.cur.Y - 11));
+							play(false, true, V);
 						}
 						else {
-							status.setStatus(STATUS_RESUME_PVP);
-							status.setIsPlay(false);
-							resumepvp = true;
-							Message("LOADED SUCCESSFULLY SLOT " + std::to_string(cur.Y - 11));
-							if (gp.getCurrent() == 0) Message("It is player 1 turn");
+							V.status.setStatus(STATUS_RESUME_PVP);
+							V.status.setIsPlay(false);
+							V.resumepvp = true;
+							Message("LOADED SUCCESSFULLY SLOT " + std::to_string(V.cur.Y - 11));
+							if (V.gp.getCurrent() == 0) Message("It is player 1 turn");
 							else Message("It is player 2 turn");
 							//else Message("It is player 2 turn");
-							play(false, false);
+							play(false, false, V);
 						}
 					}
-					if (cur.Y == 22)
+					if (V.cur.Y == 22)
 					{
-						status.setStatus(STATUS_NONE);
+						V.status.setStatus(STATUS_NONE);
 						clearRightSide();
 					}
 				}
@@ -319,241 +384,241 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 		}
 	}
 
-	if (status.getStatus() == STATUS_SETTING)
+	if (V.status.getStatus() == STATUS_SETTING)
 	{
 
 		if (!ir.bKeyDown)
 		{
 			if (ir.wVirtualKeyCode == VK_DOWN)
 			{
-				gotoXY(cur);
+				gotoXY(V.cur);
 				printf("  ");
-				if (cur.Y < 20) cur.Y++;
-				else cur.Y = 12;
-				gotoXY(cur);
+				if (V.cur.Y < 20) V.cur.Y++;
+				else V.cur.Y = 12;
+				gotoXY(V.cur);
 				printf(">>");
 			}
 
 			if (ir.wVirtualKeyCode == VK_UP)
 			{
-				gotoXY(cur);
+				gotoXY(V.cur);
 				printf("  ");
-				if (cur.Y > 12) cur.Y--;
-				else cur.Y = 20;
-				gotoXY(cur);
+				if (V.cur.Y > 12) V.cur.Y--;
+				else V.cur.Y = 20;
+				gotoXY(V.cur);
 				printf(">>");
 			}
 
 			if (ir.wVirtualKeyCode == VK_RIGHT)
 			{
-				if (cur.Y == 12) //size setting
+				if (V.cur.Y == 12) //size setting
 				{
-					n++;
-					if (n > 20) n = 10;
+					V.n++;
+					if (V.n > 20) V.n = 10;
 					gotoXY(132, 12);
-					printf("%d", n);
+					printf("%d", V.n);
 
 				}
 
-				if (cur.Y == 13) // character p1
+				if (V.cur.Y == 13) // character p1
 				{
-					a++;		
-					if (a == b)
+					V.a++;		
+					if (V.a == V.b)
 					{
-						a++;
+						V.a++;
 					} 
-					if (a > 126) a = 33;
+					if (V.a > 126) V.a = 33;
 					gotoXY(132, 13);
-					printf("%c", (char)a);
+					printf("%c", (char)V.a);
 				}
 
-				if (cur.Y == 14) // character p1
+				if (V.cur.Y == 14) // character p1
 				{
-					b++;
-					if (a == b)
+					V.b++;
+					if (V.a == V.b)
 					{
-						b++;
+						V.b++;
 					}
-					if (b > 126) b = 33;
+					if (V.b > 126) V.b = 33;
 					gotoXY(132, 14);
-					printf("%c", (char)b);
+					printf("%c", (char)V.b);
 				}
 
-				if (cur.Y == 15)	//sound setting
+				if (V.cur.Y == 15)	//sound setting
 				{
-					sound = !sound;
+					V.sound = !V.sound;
 					gotoXY(132, 15);
-					if (sound) printf("On ");
+					if (V.sound) printf("On ");
 					else printf("Off");
 				}
 
-				if (cur.Y == 16)
+				if (V.cur.Y == 16)
 				{
-					colorGrid++;
-					colorGrid %= 16;
-					if (colorGrid == 0) colorGrid++;
+					V.colorGrid++;
+					V.colorGrid %= 16;
+					if (V.colorGrid == 0) V.colorGrid++;
 					gotoXY(132, 16);
-					printf("%s", st.getColor(colorGrid));
+					printf("%s", V.st.getColor(V.colorGrid));
 				}
 
-				if (cur.Y == 17)
+				if (V.cur.Y == 17)
 				{
-					color1++;
-					color1 %= 16;
-					if (color1 == 0) color1++;
+					V.color1++;
+					V.color1 %= 16;
+					if (V.color1 == 0) V.color1++;
 					gotoXY(132, 17);
-					printf("%s", st.getColor(color1));
+					printf("%s", V.st.getColor(V.color1));
 				}
 
-				if (cur.Y == 18)
+				if (V.cur.Y == 18)
 				{
-					color2++;
-					color2 %= 16;
-					if (color2 == 0) color2++;
+					V.color2++;
+					V.color2 %= 16;
+					if (V.color2 == 0) V.color2++;
 					gotoXY(132, 18);
-					printf("%s", st.getColor(color2));
+					printf("%s", V.st.getColor(V.color2));
 				}
 			}
 
 			if (ir.wVirtualKeyCode == VK_LEFT)
 			{
-				if (cur.Y == 12) //size setting
+				if (V.cur.Y == 12) //size setting
 				{
-					n--;
-					if (n < 10) n = 20;
+					V.n--;
+					if (V.n < 10) V.n = 20;
 					gotoXY(132, 12);
-					printf("%d", n);
+					printf("%d", V.n);
 
 				}
 
-				if (cur.Y == 13) // character p1
+				if (V.cur.Y == 13) // character p1
 				{
-					a--;
-					if (a == b)
+					V.a--;
+					if (V.a == V.b)
 					{
-						a--;
+						V.a--;
 					}
-					if (a < 33) a = 126;
+					if (V.a < 33) V.a = 126;
 					gotoXY(132, 13);
-					printf("%c", (char)a);
+					printf("%c", (char)V.a);
 				}
 
-				if (cur.Y == 14) // character p2
+				if (V.cur.Y == 14) // character p2
 				{
-					b--;
-					if (a == b)
+					V.b--;
+					if (V.a == V.b)
 					{
-						b--;
+						V.b--;
 					}
-					if (b < 33) b = 126;
+					if (V.b < 33) V.b = 126;
 					gotoXY(132, 14);
-					printf("%c", (char)b);
+					printf("%c", (char)V.b);
 				}
 
-				if (cur.Y == 15)	//sound setting
+				if (V.cur.Y == 15)	//sound setting
 				{
-					sound = !sound;
+					V.sound = !V.sound;
 					gotoXY(132, 15);
-					if (sound) printf("On ");
+					if (V.sound) printf("On ");
 					else printf("Off");
 				}
 
-				if (cur.Y == 16)
+				if (V.cur.Y == 16)
 				{
-					colorGrid--;
-					if (colorGrid == 0) colorGrid = 15;
+					V.colorGrid--;
+					if (V.colorGrid == 0) V.colorGrid = 15;
 					gotoXY(132, 16);
-					printf("%s", st.getColor(colorGrid));
+					printf("%s", V.st.getColor(V.colorGrid));
 				}
 
-				if (cur.Y == 17)
+				if (V.cur.Y == 17)
 				{
-					color1--;
-					if (color1 == 0) color1 = 15;
+					V.color1--;
+					if (V.color1 == 0) V.color1 = 15;
 					gotoXY(132, 17);
-					printf("%s", st.getColor(color1));
+					printf("%s", V.st.getColor(V.color1));
 				}
 
-				if (cur.Y == 18)
+				if (V.cur.Y == 18)
 				{
-					color2--;
-					if (color2 == 0) color2 = 15;
+					V.color2--;
+					if (V.color2 == 0) V.color2 = 15;
 					gotoXY(132, 18);
-					printf("%s", st.getColor(color2));
+					printf("%s", V.st.getColor(V.color2));
 				}
 			}
 
 			if (ir.wVirtualKeyCode == VK_SPACE)
 			{
-				if (cur.Y == 19)
+				if (V.cur.Y == 19)
 				{
-					SaveSetting(n, a, b, sound, colorGrid, color1, color2);
-					status.setStatus(STATUS_NONE);
+					SaveSetting(V.n, V.a, V.b, V.sound, V.colorGrid, V.color1, V.color2, V);
+					V.status.setStatus(STATUS_NONE);
 					clearRightSide();
 					Message("Saved setting");
 				}
 
-				if (cur.Y == 20)
+				if (V.cur.Y == 20)
 				{
-					status.setStatus(STATUS_NONE);
+					V.status.setStatus(STATUS_NONE);
 					clearRightSide();
 				}
 			}
 		}
 	}
 
-	if (status.getStatus() == STATUS_PVC && !status.getIsPlay())
+	if (V.status.getStatus() == STATUS_PVC && !V.status.getIsPlay())
 	{
 
 		if (!ir.bKeyDown)
 		{
 			if (ir.wVirtualKeyCode == VK_DOWN)
 			{
-				gotoXY(cur);
+				gotoXY(V.cur);
 				printf("  ");
-				if (cur.Y < 15) cur.Y++;
-				else cur.Y = 12;
-				gotoXY(cur);
+				if (V.cur.Y < 15) V.cur.Y++;
+				else V.cur.Y = 12;
+				gotoXY(V.cur);
 				printf(">>");
 			}
 
 			if (ir.wVirtualKeyCode == VK_UP)
 			{
-				gotoXY(cur);
+				gotoXY(V.cur);
 				printf("  ");
-				if (cur.Y > 12) cur.Y--;
-				else cur.Y = 15;
-				gotoXY(cur);
+				if (V.cur.Y > 12) V.cur.Y--;
+				else V.cur.Y = 15;
+				gotoXY(V.cur);
 				printf(">>");
 			}
 
 			if (ir.wVirtualKeyCode == VK_SPACE)
 			{
-				if (cur.Y == 12)
+				if (V.cur.Y == 12)
 				{
-					computer.setLevel(1);
+					V.computer.setLevel(1);
 					clearRightSide();
 					setcursor(true, 0);
-					play(true, true);
+					play(true, true, V);
 				}
-				if (cur.Y == 13)
+				if (V.cur.Y == 13)
 				{
-					computer.setLevel(2);
+					V.computer.setLevel(2);
 					clearRightSide();
 					setcursor(true, 0);
-					play(true, true);
+					play(true, true, V);
 				}
-				if (cur.Y == 14)
+				if (V.cur.Y == 14)
 				{
-					computer.setLevel(3);
+					V.computer.setLevel(3);
 					clearRightSide();
 					setcursor(true, 0);
-					play(true, true);
+					play(true, true, V);
 				}
-				if (cur.Y == 15)
+				if (V.cur.Y == 15)
 				{
 					clearRightSide();
-					status.setStatus(STATUS_NONE);
+					V.status.setStatus(STATUS_NONE);
 				}
 			}
 		}
@@ -564,88 +629,88 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 		if (ir.wVirtualKeyCode == VK_F1) 
 		{
 			clearRightSide();
-			status.setStatus(STATUS_RESUME_PVP);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_RESUME_PVP);
+			V.status.setIsPlay(false);
 			setcursor(true, 0);
-			play(false, false);
+			play(false, false, V);
 		}
 		if (ir.wVirtualKeyCode == VK_F2)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_RESUME_PVC);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_RESUME_PVC);
+			V.status.setIsPlay(false);
 			setcursor(true, 0);
-			play(false, true);
+			play(false, true, V);
 		}
 		if (ir.wVirtualKeyCode == VK_F3)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_PVP);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_PVP);
+			V.status.setIsPlay(false);
 			setcursor(true, 0);
-			play(true, false);
+			play(true, false, V);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F4)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_PVC);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_PVC);
+			V.status.setIsPlay(false);
 			setcursor(false, 0);
-			pvcMenu();
+			pvcMenu(V);
 			//play(true, true);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F5)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_SETTING);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_SETTING);
+			V.status.setIsPlay(false);
 			setcursor(false, 0);
-			settingMenu();
+			settingMenu(V);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F6)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_SAVE);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_SAVE);
+			V.status.setIsPlay(false);
 			//writeSaveFile(gp, player[0], player[1], 0);
 			setcursor(false, 0);
-			SaveFile();
+			SaveFile(V);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F7)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_LOAD);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_LOAD);
+			V.status.setIsPlay(false);
 			//readSaveFile(gp, player[0], player[1], 0);
 			setcursor(false, 0);
-			LoadFile();
+			LoadFile(V);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F8)
 		{
 			clearRightSide();
-			status.setStatus(STATUS_STAT);
+			V.status.setStatus(STATUS_STAT);
 			setcursor(false, 0);
-			status.setIsPlay(false);
-			StatisticMenu();
+			V.status.setIsPlay(false);
+			StatisticMenu(V);
 		}
 
 		if (ir.wVirtualKeyCode == VK_F9)
 		{
-			status.setStatus(STATUS_EXIT);
-			status.setIsPlay(false);
+			V.status.setStatus(STATUS_EXIT);
+			V.status.setIsPlay(false);
 		}
 	}
 
 }
 
-void LoadFile()
+void LoadFile(Variables &V)
 {
-	TextColor(st.getColorCodeGrid());
+	TextColor(V.st.getColorCodeGrid());
 	gotoXY(115, 10);
 	printf("CHOOSE LOAD SLOT:");
 	for (int i = 12; i < 22; i++)
@@ -657,27 +722,27 @@ void LoadFile()
 	gotoXY(115, 22);
 	printf("Return");
 
-	cur = { 112, 12 };
-	gotoXY(cur);
+	V.cur = { 112, 12 };
+	gotoXY(V.cur);
 	printf(">>");
 
 	INPUT_RECORD InputRecord;
 	DWORD Events;
 
-	while (status.getStatus() == STATUS_LOAD)
+	while (V.status.getStatus() == STATUS_LOAD)
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
 
 		if (InputRecord.EventType == KEY_EVENT)
 		{
-			KeyEventProc(InputRecord.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent, V);
 		}
 	}
 }
 
-void SaveFile()
+void SaveFile(Variables &V)
 {
-	TextColor(st.getColorCodeGrid());
+	TextColor(V.st.getColorCodeGrid());
 	gotoXY(115, 10);
 	printf("CHOOSE SAVE SLOT:");
 	for (int i = 12; i < 22; i++)
@@ -689,31 +754,31 @@ void SaveFile()
 	gotoXY(115, 22);
 	printf("Return");
 
-	cur = { 112, 12 };
-	gotoXY(cur);
+	V.cur = { 112, 12 };
+	gotoXY(V.cur);
 	printf(">>");
 
 	INPUT_RECORD InputRecord;
 	DWORD Events;
 
-	while (status.getStatus() == STATUS_SAVE)
+	while (V.status.getStatus() == STATUS_SAVE)
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
 
 		if (InputRecord.EventType == KEY_EVENT)
 		{
-			KeyEventProc(InputRecord.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent, V);
 		}
 	}
 
 }
 
-void play(bool isNew, bool comp)
+void play(bool isNew, bool comp, Variables &V)
 {
-	init(isNew, comp);
+	init(isNew, comp, V);
 
-	resumepvp = (!comp) ? true : false;
-	resumepvc = (comp) ? true : false;
+	V.resumepvp = (!comp) ? true : false;
+	V.resumepvc = (comp) ? true : false;
 
 	INPUT_RECORD InputRecord;
 	DWORD Events;
@@ -725,53 +790,54 @@ void play(bool isNew, bool comp)
 		
 		if (InputRecord.EventType == KEY_EVENT) 
 		{
-			KeyEventProc(InputRecord.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent, V);
 		}
 
-		if (comp && currentPlayer == 1)
+		if (comp && V.currentPlayer == 1)
 		{
-			if (currentPlayer == 0) TextColor(st.getColorCodeChar1());
-			else TextColor(st.getColorCodeChar2());
+			if (V.currentPlayer == 0) TextColor(V.st.getColorCodeChar1());
+			else TextColor(V.st.getColorCodeChar2());
 			setcursor(false, 0);
-			cur = computer.nextMove(gp);
-			gotoXY(toXconsole(cur.X), toYconsole(cur.Y));
-			printf("%c", player[currentPlayer].getPlayerChar());
+			V.cur = V.computer.nextMove(V.gp);
+			gotoXY(toXconsole(V.cur.X), toYconsole(V.cur.Y));
+			printf("%c", V.player[V.currentPlayer].getPlayerChar());
 
-			gp.set(cur.X, cur.Y, currentPlayer);
+			V.gp.set(V.cur.X, V.cur.Y, V.currentPlayer);
 			//player[currentPlayer].setMove(player[currentPlayer].getMove() + 1);
 
-			if (gp.win(cur.X, cur.Y))
+			if (V.gp.win(V.cur.X, V.cur.Y))
 			{
-				isWin = true;
-				status.setIsPlay(false);
-				Message("Computer win");
+				V.isWin = true;
+				V.status.setIsPlay(false);
+				//Message("Computer win");
+				congrat(2);
 			}
 
-			if (gp.draw())
+			if (V.gp.draw())
 			{
-				isDraw = true;
-				status.setIsPlay(false);
-				Message("Draw game!");
+				V.isDraw = true;
+				V.status.setIsPlay(false);
+				congrat(3);
 			}
 
-			cur.X = toXconsole(cur.X);
-			cur.Y = toYconsole(cur.Y);
-			gotoXY(cur);
+			V.cur.X = toXconsole(V.cur.X);
+			V.cur.Y = toYconsole(V.cur.Y);
+			gotoXY(V.cur);
 
-			currentPlayer = currentPlayer ^ 1; //swap player
-			gp.setCurrent(currentPlayer);
+			V.currentPlayer = V.currentPlayer ^ 1; //swap player
+			V.gp.setCurrent(V.currentPlayer);
 		}
 
-		if (isWin || isDraw) 
+		if (V.isWin || V.isDraw) 
 		{
-			resumepvp = false;
-			resumepvc = false;
-			status.setIsPlay(false);
-			status.setStatus(STATUS_NONE);
+			V.resumepvp = false;
+			V.resumepvc = false;
+			V.status.setIsPlay(false);
+			V.status.setStatus(STATUS_NONE);
 			break;
 		}
 
-		if (!status.getIsPlay()) 
+		if (!V.status.getIsPlay()) 
 		{
 			break;
 		}
@@ -779,9 +845,9 @@ void play(bool isNew, bool comp)
 	setcursor(false, 0);
 }
 
-void pvcMenu()
+void pvcMenu(Variables &V)
 {
-	TextColor(st.getColorCodeGrid());
+	TextColor(V.st.getColorCodeGrid());
 	gotoXY(115, 10);
 	printf("PVC MODE:");
 
@@ -794,66 +860,66 @@ void pvcMenu()
 	gotoXY(115, 15);
 	printf("Return");
 
-	cur = { 112, 12 };
-	gotoXY(cur);
+	V.cur = { 112, 12 };
+	gotoXY(V.cur);
 	printf(">>");
 
 	INPUT_RECORD InputRecord;
 	DWORD Events;
 
-	while (status.getStatus() == STATUS_PVC && !status.getIsPlay())
+	while (V.status.getStatus() == STATUS_PVC && !V.status.getIsPlay())
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
 
 		if (InputRecord.EventType == KEY_EVENT)
 		{
-			KeyEventProc(InputRecord.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent, V);
 		}
 	}
 }
 
-void settingMenu()
+void settingMenu(Variables &V)
 {
-	TextColor(st.getColorCodeGrid());
+	TextColor(V.st.getColorCodeGrid());
 
-	n = st.getSize();
-	a = (int)st.getCharP1();
-	b = (int)st.getCharP2();
-	sound = st.getSoundOn();
-	colorGrid = st.getColorCodeGrid();
-	color1 = st.getColorCodeChar1();
-	color2 = st.getColorCodeChar2();
+	V.n = V.st.getSize();
+	V.a = (int)V.st.getCharP1();
+	V.b = (int)V.st.getCharP2();
+	V.sound = V.st.getSoundOn();
+	V.colorGrid = V.st.getColorCodeGrid();
+	V.color1 = V.st.getColorCodeChar1();
+	V.color2 = V.st.getColorCodeChar2();
 
 	gotoXY(115, 10);
 	printf("SETTINGS:");
 	gotoXY(115, 12);
 	printf("size:            ");
-	printf("%d", n);
+	printf("%d", V.n);
 
 	gotoXY(115, 13);
 	printf("Player 1 symbol: ");
-	printf("%c", (char)a);
+	printf("%c", (char)V.a);
 
 	gotoXY(115, 14);
 	printf("Player 2 symbol: ");
-	printf("%c", (char)b);
+	printf("%c", (char)V.b);
 
 	gotoXY(115, 15);
 	printf("Sound On/Off:    ");
-	if (sound) printf("On");
+	if (V.sound) printf("On");
 	else printf("Off");
 
 	gotoXY(115, 16);
 	printf("Grid color:      ");
-	printf("%s", st.getColor(colorGrid));
+	printf("%s", V.st.getColor(V.colorGrid));
 
 	gotoXY(115, 17);
 	printf("Player 1 color:  ");
-	printf("%s", st.getColor(color1));
+	printf("%s", V.st.getColor(V.color1));
 
 	gotoXY(115, 18);
 	printf("Player 2 color:  ");
-	printf("%s", st.getColor(color2));
+	printf("%s", V.st.getColor(V.color2));
 
 	gotoXY(115, 19);
 	printf("Save change");
@@ -862,35 +928,35 @@ void settingMenu()
 	gotoXY(115, 20);
 	printf("Return");
 
-	cur = { 112, 12 };
-	gotoXY(cur);
+	V.cur = { 112, 12 };
+	gotoXY(V.cur);
 	printf(">>");
 
 	INPUT_RECORD InputRecord;
 	DWORD Events;
 
-	while (status.getStatus() == STATUS_SETTING)
+	while (V.status.getStatus() == STATUS_SETTING)
 	{
 		ReadConsoleInput(hin, &InputRecord, 1, &Events);
 
 		if (InputRecord.EventType == KEY_EVENT)
 		{
-			KeyEventProc(InputRecord.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent, V);
 		}
 	}
 }
 
-void LoadSetting()
+void LoadSetting(Variables &V)
 {
-	readSettingFile(st);
-	player[0].setPlayerChar(st.getCharP1());
-	player[1].setPlayerChar(st.getCharP2());
-	gp.setSize(st.getSize());
-	TextColor(st.getColorCodeGrid());
-	drawGrid(st.getSize());
+	readSettingFile(V.st);
+	V.player[0].setPlayerChar(V.st.getCharP1());
+	V.player[1].setPlayerChar(V.st.getCharP2());
+	V.gp.setSize(V.st.getSize());
+	TextColor(V.st.getColorCodeGrid());
+	drawGrid(V.st.getSize());
 	//PlaySound(TEXT("dive.wav"), NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);
 	mciSendString("open \"dive.mp3\" type mpegvideo alias mp3", NULL, 0, NULL);
-	if (st.getSoundOn())
+	if (V.st.getSoundOn())
 	{
 		mciSendString("play mp3 repeat", NULL, 0, NULL);
 	}
@@ -900,36 +966,36 @@ void LoadSetting()
 	}
 }
 
-void SaveSetting(int n, int a, int b, bool sound, int colorGrid, int color1, int color2)
+void SaveSetting(int n, int a, int b, bool sound, int colorGrid, int color1, int color2, Variables &V)
 {
-	st.setCharP1((char)a);
-	st.setCharP2((char)b);
-	st.setColorCodeChar1(color1);
-	st.setColorCodeChar2(color2);
-	st.setSound((bool)sound);
-	st.setColorCodeGrid(colorGrid);
-	st.setSize(n);
+	V.st.setCharP1((char)a);
+	V.st.setCharP2((char)b);
+	V.st.setColorCodeChar1(color1);
+	V.st.setColorCodeChar2(color2);
+	V.st.setSound((bool)sound);
+	V.st.setColorCodeGrid(colorGrid);
+	V.st.setSize(n);
 
-	player[0].setPlayerChar(st.getCharP1());
-	player[1].setPlayerChar(st.getCharP2());
-	if (st.getSize() != gp.getSize())
+	V.player[0].setPlayerChar(V.st.getCharP1());
+	V.player[1].setPlayerChar(V.st.getCharP2());
+	if (V.st.getSize() != V.gp.getSize())
 	{
 		clearGrid();
-		gp.clear();
-		gp.setSize(st.getSize());
-		TextColor(st.getColorCodeGrid());
-		drawGrid(st.getSize());
-		resumepvp = false;
-		resumepvc = true;
+		V.gp.clear();
+		V.gp.setSize(V.st.getSize());
+		TextColor(V.st.getColorCodeGrid());
+		drawGrid(V.st.getSize());
+		V.resumepvp = false;
+		V.resumepvc = true;
 	}
 	else 
 	{
-		TextColor(st.getColorCodeGrid());
-		drawGrid(st.getSize());
-		Load(gp);
+		TextColor(V.st.getColorCodeGrid());
+		drawGrid(V.st.getSize());
+		Load(V.gp, V);
 	}
 
-	if (st.getSoundOn())
+	if (V.st.getSoundOn())
 	{
 		mciSendString("play mp3 repeat", NULL, 0, NULL);
 	}
@@ -938,14 +1004,14 @@ void SaveSetting(int n, int a, int b, bool sound, int colorGrid, int color1, int
 		mciSendString("pause mp3", NULL, 0, NULL);
 	}
 
-	writeSettingFile(st);
-	TextColor(st.getColorCodeGrid());
+	writeSettingFile(V.st);
+	TextColor(V.st.getColorCodeGrid());
 	Message("Saved settings!");
 }
 
-void StatisticMenu()
+void StatisticMenu(Variables &V)
 {
-	TextColor(st.getColorCodeGrid());
+	TextColor(V.st.getColorCodeGrid());
 	gotoXY(115, 10);
 	printf("STATISTIC:");
 	gotoXY(115, 11);
@@ -968,51 +1034,51 @@ void StatisticMenu()
 
 	gotoXY(117, 13);  
 	printf("Total game:           "); 
-	printf("%d", statis.GetTotal());
+	printf("%d", V.statis.GetTotal());
 
 	gotoXY(117, 14);
 	printf("Player 1 win:         ");
-	printf("%d", statis.GetWinP1());
+	printf("%d", V.statis.GetWinP1());
 
 	gotoXY(117, 15);
 	printf("Player 2 win:         ");
-	printf("%d", statis.GetWinP2());
+	printf("%d", V.statis.GetWinP2());
 
 	gotoXY(117, 16);
 	printf("Draw game:            ");
-	printf("%d", statis.GetDraw());
+	printf("%d", V.statis.GetDraw());
 
 	gotoXY(117, 17);
 	printf("Player 1 total move:  ");
-	printf("%d", statis.GetMoveP1());
+	printf("%d", V.statis.GetMoveP1());
 
 	gotoXY(117, 18);
 	printf("Player 2 total move:  ");
-	printf("%d", statis.GetMoveP2());
+	printf("%d", V.statis.GetMoveP2());
 
 	gotoXY(117, 19);
 	printf("Player 1 win percent: ");
-	printf("%.2lf", statis.GetWinPercentP1());
+	printf("%.2lf", V.statis.GetWinPercentP1());
 
 	gotoXY(117, 20);
 	printf("Player 2 win percent: ");
-	printf("%.2lf", statis.GetWinPercentP2());
+	printf("%.2lf", V.statis.GetWinPercentP2());
 
 	gotoXY(117, 21);
 	printf("Draw percent:         ");
-	printf("%.2lf", statis.GetDrawPercent());
+	printf("%.2lf", V.statis.GetDrawPercent());
 }
 
-void LoadStatFile()
+void LoadStatFile(Variables &V)
 {
-	readStatFile(statis);
+	readStatFile(V.statis);
 }
 
 int main()
 {
 	setConsoleWindow();
 	setMode();
-
+	Variables V;
 	LoadSplash();
 
 	LoadAbout();
@@ -1020,8 +1086,8 @@ int main()
 	banner();
 	setcursor(false, 0);
 	
-	LoadSetting();
-	LoadStatFile();
+	LoadSetting(V);
+	LoadStatFile(V);
 
 	INPUT_RECORD InputRecord;
 	DWORD Events;
@@ -1032,13 +1098,13 @@ int main()
 
 		if (InputRecord.EventType == KEY_EVENT)
 		{
-			KeyEventProc(InputRecord.Event.KeyEvent);
+			KeyEventProc(InputRecord.Event.KeyEvent, V);
 		}
 
-		if (status.getStatus() == STATUS_EXIT) break;
+		if (V.status.getStatus() == STATUS_EXIT) break;
 	}
 	
 	//system("pause");
-	writeStatFile(statis);
+	writeStatFile(V.statis);
 	return 0;
 }
