@@ -296,13 +296,16 @@ void KeyEventProc(KEY_EVENT_RECORD ir) //can thay doi cac hang so khi lam phan o
 							status.setIsPlay(false);
 							resumepvc = true;
 							Message("LOADED SUCCESSFULLY SLOT " + std::to_string(cur.Y - 11));
-							play(true, true);
+							play(false, true);
 						}
 						else {
 							status.setStatus(STATUS_RESUME_PVP);
 							status.setIsPlay(false);
 							resumepvp = true;
 							Message("LOADED SUCCESSFULLY SLOT " + std::to_string(cur.Y - 11));
+							if (gp.getCurrent() == 0) Message("It is player 1 turn");
+							else Message("It is player 2 turn");
+							//else Message("It is player 2 turn");
 							play(false, false);
 						}
 					}

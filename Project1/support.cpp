@@ -56,20 +56,6 @@ void setMode()
 	SetConsoleMode(hin, ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
 }
 
-bool isInBanner(int x, int y)
-{
-	return (x >= 0 && x <= 80 && y >= 0 && y <= 10);
-}
-
-bool isInGrid(int x, int y)
-{
-	return (x >= 0 && x <= 80 && y >= 11);
-}
-
-bool isInRightSide(int x, int y)
-{
-	return (x >= 81);
-}
 
 int toXarray(int x)
 {

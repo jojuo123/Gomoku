@@ -19,16 +19,11 @@
 class Status
 {
 private:
-	int rightSideScreen;
+	//int rightSideScreen;
 	bool isPlay;
 	int status;
 public:
-	int getRightSideScreen() {
-		return rightSideScreen;
-	}
-	void setRightSideScreen(int k) {
-		rightSideScreen = k;
-	}
+	
 	bool getIsPlay() {
 		return isPlay;
 	}
@@ -42,7 +37,7 @@ public:
 		status = a;
 	}
 	Status() {
-		rightSideScreen = 0;
+		//rightSideScreen = 0;
 		status = -1;
 	}
 };

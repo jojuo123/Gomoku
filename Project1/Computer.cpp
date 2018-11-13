@@ -265,30 +265,30 @@ int Computer::evaluation(GamePlay & gp)
 	// 6: OOOO 100000
 	// 7: OOOOO MAX_VAL
 
-	if (pattern[0][7] > 0) return MIN_VAL;
 	if (pattern[1][7] > 0) return MAX_VAL;
+	if (pattern[0][7] > 0) return MIN_VAL;
 
 	int sum = 0;
 	if (level == 3)
 	{
 		sum += (pattern[1][1] / 2) * 10;
-		sum -= (pattern[0][1] / 2) * 10;
+		sum -= (pattern[0][1] / 2) * 10 * 5;
 
 		sum += (pattern[1][2] / 2) * 100;
-		sum -= (pattern[0][2] / 2) * 100;
+		sum -= (pattern[0][2] / 2) * 100 * 5;
 	}
 
 	sum += (pattern[1][3] / 3) * 1000;
-	sum -= (pattern[0][3] / 3) * 1000;
+	sum -= (pattern[0][3] / 3) * 1000 * 5;
 
 	sum += (pattern[1][4] / 4) * 10000;
-	sum -= (pattern[0][4] / 4) * 10000;
+	sum -= (pattern[0][4] / 4) * 10000 * 5;
 
 	sum += (pattern[1][5] / 3) * 10050;
-	sum -= (pattern[0][5] / 3) * 10050;
+	sum -= (pattern[0][5] / 3) * 10050 * 5;
 
 	sum += (pattern[1][6] / 4) * 100000;
-	sum -= (pattern[0][6] / 4) * 100000;
+	sum -= (pattern[0][6] / 4) * 100000 * 5;
 
 	return sum;
 }

@@ -20,11 +20,11 @@ void setConsoleWindow();
 
 void setMode();
 
-bool isInBanner(int, int);
+//bool isInBanner(int, int);
 
-bool isInGrid(int, int);
+//bool isInGrid(int, int);
 
-bool isInRightSide(int, int);
+//bool isInRightSide(int, int);
 
 int toXarray(int x);
 

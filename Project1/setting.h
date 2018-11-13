@@ -49,7 +49,7 @@ public:
 	void setColorCodeChar2(int a) {
 		colorCodeChar2 = a;
 	}
-	void Save(Player& p1, Player& p2);
+	//void Save(Player& p1, Player& p2);
 	int getSize() {
 		return size;
 	}

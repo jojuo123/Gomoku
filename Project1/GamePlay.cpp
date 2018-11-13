@@ -20,6 +20,7 @@ void GamePlay::clear()
 
 bool GamePlay::isEmpty(int x, int y)
 {
+	if (!inBoard(x, y)) return false;
 	return (board[x][y] == 0);
 }
 
